@@ -38,7 +38,7 @@ createRoot(document.getElementById("root")).render(
                 <Route path="/sign-up" element={<SignUpPage />} />
                 <Route path="/hotels" element={<HotelsPage />} />
                 <Route element={<ProtectLayout />}>
-                  <Route path="/hotels/:_id" element={<HotelDetailsPage />} />
+                  <Route path="/hotels/:id" element={<HotelDetailsPage />} />
                   <Route path="/my-account" element={<MyAccountPage />} />
                 </Route>
               </Route>

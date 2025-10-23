@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 function HotelCard(props) {
   const { hotel } = props;
+  console.log("HotelCard - Hotel ID:", hotel._id, "Hotel name:", hotel.name);
   // let num = 1;
   //   const handleClick = () => {
   //     console.log("I was clicked")

@@ -16,8 +16,9 @@ import BookingForm from "@/components/BookingForm";
 import StripeCheckout from "@/components/StripeCheckout";
 
 const HotelDetailsPage = () => {
-  const { _id } = useParams();
-  const { data: hotel, isLoading, isError, error } = useGetHotelByIdQuery(_id);
+  const { id } = useParams();
+  console.log("HotelDetailsPage - Route param id:", id);
+  const { data: hotel, isLoading, isError, error } = useGetHotelByIdQuery(id);
   const [currentBooking, setCurrentBooking] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
 
