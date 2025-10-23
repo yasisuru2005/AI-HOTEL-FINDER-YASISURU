@@ -28,7 +28,6 @@ export const createCheckoutSession = async (req, res, next) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      ui_mode: "embedded",
       line_items: [
         {
           price_data: {
@@ -47,7 +46,8 @@ export const createCheckoutSession = async (req, res, next) => {
         userId: booking.userId,
         hotelId: hotel._id.toString(),
       },
-      return_url: `${process.env.CLIENT_URL}/payment/return?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.CLIENT_URL}/my-account?payment=success`,
+      cancel_url: `${process.env.CLIENT_URL}/hotels/${hotel._id}?payment=cancelled`,
     });
 
     console.log("Stripe session created:", {
@@ -57,7 +57,11 @@ export const createCheckoutSession = async (req, res, next) => {
       clientSecretLength: session.client_secret?.length
     });
     
-    res.status(200).json({ client_secret: session.client_secret, session_id: session.id });
+    res.status(200).json({ 
+      checkout_url: session.url, 
+      session_id: session.id,
+      client_secret: session.client_secret 
+    });
   } catch (error) {
     next(error);
   }

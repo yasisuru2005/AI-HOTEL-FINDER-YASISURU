@@ -20,19 +20,22 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
 
       console.log("Checkout session result:", result);
       
-      // For now, let's just show a success message and redirect to account
-      toast.success("Payment session created! Redirecting to your account...");
-      setTimeout(() => {
-        onPaymentSuccess();
-      }, 2000);
+      // Redirect to Stripe Checkout
+      if (result.checkout_url) {
+        window.location.href = result.checkout_url;
+      } else {
+        toast.error("Payment session could not be created. Please try again.");
+        onCancel();
+      }
       
     } catch (error) {
       console.error("Failed to create checkout session:", error);
       toast.error("Failed to initialize payment. Please try again.");
+      onCancel();
     } finally {
       setIsLoading(false);
     }
-  }, [booking, createCheckoutSession, onPaymentSuccess]);
+  }, [booking, createCheckoutSession, onCancel]);
 
   useEffect(() => {
     if (booking) {
@@ -46,7 +49,7 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
         <CardContent className="p-6">
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Preparing payment...</span>
+            <span>Redirecting to payment...</span>
           </div>
         </CardContent>
       </Card>
@@ -58,17 +61,17 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
-          Payment Processing
+          Payment Redirect
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Processing your payment...</span>
+            <span>Redirecting to secure payment...</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Your booking has been created and payment is being processed.
+            You will be redirected to Stripe's secure payment page.
           </p>
           <div className="flex gap-2">
             <Button
