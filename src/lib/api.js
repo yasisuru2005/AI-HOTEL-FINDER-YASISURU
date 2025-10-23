@@ -99,8 +99,12 @@ export const api = createApi({
       headers.set("Content-Type", "application/json");
       // Add user ID header for authentication
       const userId = localStorage.getItem("userId");
+      console.log("API request - User ID from localStorage:", userId);
       if (userId) {
         headers.set("x-user-id", userId);
+        console.log("Added x-user-id header:", userId);
+      } else {
+        console.log("No user ID found - request will fail authentication");
       }
       return headers;
     },
@@ -204,8 +208,6 @@ export const api = createApi({
   }),
 });
 
-// Export hooks for usage in functional components, which are
-// auto-generated based on the defined endpoints
 export const {
   useGetAllHotelsQuery,
   useGetHotelByIdQuery,
