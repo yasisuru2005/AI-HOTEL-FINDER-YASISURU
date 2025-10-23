@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { useCreateCheckoutSessionMutation } from "@/lib/api";
@@ -12,16 +12,11 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
   const [clientSecret, setClientSecret] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
 
-  useEffect(() => {
-    if (booking) {
-      createCheckoutSessionHandler();
-    }
-  }, [booking]);
-
-  const createCheckoutSessionHandler = async () => {
-    if (!booking) return;
+  const createCheckoutSessionHandler = useCallback(async () => {
+    if (!booking || isInitialized) return;
 
     setIsLoading(true);
     try {
@@ -40,13 +35,20 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
       const decodedClientSecret = decodeURIComponent(result.client_secret);
       console.log("Decoded client secret:", decodedClientSecret);
       setClientSecret(decodedClientSecret);
+      setIsInitialized(true);
     } catch (error) {
       console.error("Failed to create checkout session:", error);
       toast.error("Failed to initialize payment. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [booking, createCheckoutSession, isInitialized]);
+
+  useEffect(() => {
+    if (booking && !isInitialized) {
+      createCheckoutSessionHandler();
+    }
+  }, [booking, createCheckoutSessionHandler, isInitialized]);
 
   const options = {
     clientSecret,
@@ -92,7 +94,11 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Elements options={options} stripe={stripePromise}>
+        <Elements 
+          key={clientSecret} 
+          options={options} 
+          stripe={stripePromise}
+        >
           <EmbeddedCheckoutProvider
             options={options}
             stripe={stripePromise}
