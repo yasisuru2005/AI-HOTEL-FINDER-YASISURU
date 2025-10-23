@@ -2,11 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useCreateCheckoutSessionMutation } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CreditCard, ExternalLink } from "lucide-react";
+import { Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
 const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
-  const [checkoutUrl, setCheckoutUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
 
