@@ -17,7 +17,10 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      process.env.CLIENT_URL
+    ].filter(Boolean),
   })
 );
 app.use(clerkMiddleware()); // Reads the JWT from the request and sets the auth object on the request
