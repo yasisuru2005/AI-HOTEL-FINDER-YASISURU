@@ -2,8 +2,8 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const getAllHotels = async () => {
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    const res = await fetch(`${apiUrl}/api/hotels`, {
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+    const res = await fetch(`${apiUrl}/hotels`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -21,8 +21,8 @@ const getAllHotels = async () => {
 
 const getAllLocations = async () => {
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    const res = await fetch(`${apiUrl}/api/locations`, {
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+    const res = await fetch(`${apiUrl}/locations`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
