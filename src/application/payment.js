@@ -50,6 +50,13 @@ export const createCheckoutSession = async (req, res, next) => {
       return_url: `${process.env.CLIENT_URL}/payment/return?session_id={CHECKOUT_SESSION_ID}`,
     });
 
+    console.log("Stripe session created:", {
+      sessionId: session.id,
+      clientSecret: session.client_secret,
+      clientSecretType: typeof session.client_secret,
+      clientSecretLength: session.client_secret?.length
+    });
+    
     res.status(200).json({ client_secret: session.client_secret, session_id: session.id });
   } catch (error) {
     next(error);

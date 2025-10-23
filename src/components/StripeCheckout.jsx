@@ -29,6 +29,13 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
         bookingId: booking._id,
       }).unwrap();
 
+      console.log("Checkout session result:", {
+        clientSecret: result.client_secret,
+        clientSecretType: typeof result.client_secret,
+        clientSecretLength: result.client_secret?.length,
+        sessionId: result.session_id
+      });
+
       setClientSecret(result.client_secret);
     } catch (error) {
       console.error("Failed to create checkout session:", error);
