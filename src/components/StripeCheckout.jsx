@@ -36,7 +36,10 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
         sessionId: result.session_id
       });
 
-      setClientSecret(result.client_secret);
+      // Decode URL-encoded client secret
+      const decodedClientSecret = decodeURIComponent(result.client_secret);
+      console.log("Decoded client secret:", decodedClientSecret);
+      setClientSecret(decodedClientSecret);
     } catch (error) {
       console.error("Failed to create checkout session:", error);
       toast.error("Failed to initialize payment. Please try again.");
