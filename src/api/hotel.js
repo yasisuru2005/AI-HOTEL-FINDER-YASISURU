@@ -23,7 +23,7 @@ hotelsRouter
 
 hotelsRouter
   .route("/:_id")
-  .get(isAuthenticated, getHotelById)
+  .get(getHotelById) // Public - anyone can view hotel details
   .put(updateHotel)
   .patch(patchHotel)
   .delete(deleteHotel);
