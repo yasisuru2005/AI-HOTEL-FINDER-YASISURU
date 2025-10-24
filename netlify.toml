@@ -1,0 +1,23 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  VITE_API_URL = "https://ai-hotel-finder-yasisuru.onrender.com/api"
+  VITE_STRIPE_PUBLISHABLE_KEY = "pk_test_51SLKjI8aWWO2PXQaFaknWvilImxi3YeXuZZTgfjLrImjdZllAd5tjmjCh7SJIeaVVpzvL6bheJ4A9tcJ2maIYb6H00OSQBaqoS"
+
+[context.deploy-preview.environment]
+  VITE_API_URL = "https://ai-hotel-finder-yasisuru.onrender.com/api"
+  VITE_STRIPE_PUBLISHABLE_KEY = "pk_test_51SLKjI8aWWO2PXQaFaknWvilImxi3YeXuZZTgfjLrImjdZllAd5tjmjCh7SJIeaVVpzvL6bheJ4A9tcJ2maIYb6H00OSQBaqoS"
+
+[context.branch-deploy.environment]
+  VITE_API_URL = "https://ai-hotel-finder-yasisuru.onrender.com/api"
+  VITE_STRIPE_PUBLISHABLE_KEY = "pk_test_51SLKjI8aWWO2PXQaFaknWvilImxi3YeXuZZTgfjLrImjdZllAd5tjmjCh7SJIeaVVpzvL6bheJ4A9tcJ2maIYb6H00OSQBaqoS"
