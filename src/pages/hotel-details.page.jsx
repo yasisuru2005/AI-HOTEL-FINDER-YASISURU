@@ -81,13 +81,14 @@ const HotelDetailsPage = () => {
 
   return (
     <main className="px-4">
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="space-y-4">
+      <div className="grid md:grid-cols-3 gap-8">
+        {/* Hotel Images - Left Column (2 cols on desktop) */}
+        <div className="md:col-span-2 space-y-4">
           <div className="relative w-full h-[400px]">
             <img
               src={hotel.image}
               alt={hotel.name}
-              className="absolute object-cover rounded-lg"
+              className="absolute object-cover rounded-lg w-full h-full"
             />
           </div>
           <div className="flex space-x-2">
@@ -95,68 +96,84 @@ const HotelDetailsPage = () => {
             <Badge variant="secondary">French Cuisine</Badge>
             <Badge variant="secondary">City Center</Badge>
           </div>
-        </div>
-        <div className="space-y-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold">{hotel.name}</h1>
-              <div className="flex items-center mt-2">
-                <MapPin className="h-5 w-5 text-muted-foreground mr-1" />
-                <p className="text-muted-foreground">{hotel.location}</p>
-              </div>
-            </div>
-            <Button variant="outline" size="icon">
-              <Star className="h-4 w-4" />
-              <span className="sr-only">Add to favorites</span>
-            </Button>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Star className="h-5 w-5 fill-primary text-primary" />
-            <span className="font-bold">{hotel?.rating ?? "No rating"}</span>
-            <span className="text-muted-foreground">
-              ({hotel?.reviews.length === 0 ? "No" : hotel?.reviews.length}{" "}
-              reviews)
-            </span>
-          </div>
-          <p className="text-muted-foreground">{hotel.description}</p>
-          <Card>
-            <CardContent className="p-4">
-              <h2 className="text-xl font-semibold mb-4">Amenities</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center">
-                  <Wifi className="h-5 w-5 mr-2" />
-                  <span>Free Wi-Fi</span>
-                </div>
-                <div className="flex items-center">
-                  <Building2 className="h-5 w-5 mr-2" />
-                  <span>Restaurant</span>
-                </div>
-                <div className="flex items-center">
-                  <Tv className="h-5 w-5 mr-2" />
-                  <span>Flat-screen TV</span>
-                </div>
-                <div className="flex items-center">
-                  <Coffee className="h-5 w-5 mr-2" />
-                  <span>Coffee maker</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold">${hotel.price}</p>
-              <p className="text-sm text-muted-foreground">per night</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Booking Section */}
-      <div className="mt-8">
-        <BookingForm
-          hotel={hotel}
-          onBookingCreated={handleBookingCreated}
-        />
+          {/* Hotel Details */}
+          <div className="space-y-6 mt-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold">{hotel.name}</h1>
+                <div className="flex items-center mt-2">
+                  <MapPin className="h-5 w-5 text-muted-foreground mr-1" />
+                  <p className="text-muted-foreground">{hotel.location}</p>
+                </div>
+              </div>
+              <Button variant="outline" size="icon">
+                <Star className="h-4 w-4" />
+                <span className="sr-only">Add to favorites</span>
+              </Button>
+            </div>
+            
+            <div className="flex items-center space-x-1">
+              <Star className="h-5 w-5 fill-primary text-primary" />
+              <span className="font-bold">{hotel?.rating ?? "No rating"}</span>
+              <span className="text-muted-foreground">
+                ({hotel?.reviews.length === 0 ? "No" : hotel?.reviews.length}{" "}
+                reviews)
+              </span>
+            </div>
+            
+            <div>
+              <h2 className="text-xl font-semibold mb-2">About this hotel</h2>
+              <p className="text-muted-foreground">{hotel.description}</p>
+            </div>
+            
+            <Card>
+              <CardContent className="p-4">
+                <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center">
+                    <Wifi className="h-5 w-5 mr-2" />
+                    <span>Free Wi-Fi</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Building2 className="h-5 w-5 mr-2" />
+                    <span>Restaurant</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Tv className="h-5 w-5 mr-2" />
+                    <span>Flat-screen TV</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Coffee className="h-5 w-5 mr-2" />
+                    <span>Coffee maker</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Starting from</p>
+                    <p className="text-3xl font-bold">${hotel.price}</p>
+                    <p className="text-sm text-muted-foreground">per night</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Booking Form - Right Column (sticky) */}
+        <div className="md:col-span-1">
+          <div className="md:sticky md:top-4">
+            <BookingForm
+              hotel={hotel}
+              onBookingCreated={handleBookingCreated}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );
