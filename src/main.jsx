@@ -10,6 +10,7 @@ import NotFoundPage from "./pages/not-found.page.jsx";
 import SignInPage from "./pages/sign-in.page.jsx";
 import SignUpPage from "./pages/sign-up.page.jsx";
 import PaymentPage from "./pages/payment.page.jsx";
+import PaymentReturnPage from "./pages/payment-return.page.jsx";
 
 import { Provider } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router";
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")).render(
                   <Route path="/hotels/:_id" element={<HotelDetailsPage />} />
                   <Route path="/my-account" element={<MyAccountPage />} />
                   <Route path="/payment" element={<PaymentPage />} />
+                  <Route path="/payment/return" element={<PaymentReturnPage />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFoundPage />} />

@@ -201,6 +201,9 @@ export const api = createApi({
         body: sessionData,
       }),
     }),
+    getCheckoutSession: build.query({
+      query: (sessionId) => `payments/session/${sessionId}`,
+    }),
   }),
 });
 
@@ -213,4 +216,5 @@ export const {
   useGetUserBookingsQuery,
   useGetBookingByIdQuery,
   useCreateCheckoutSessionMutation,
+  useGetCheckoutSessionQuery,
 } = api;
