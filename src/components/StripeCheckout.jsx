@@ -23,16 +23,22 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
   const createCheckoutSessionHandler = async () => {
     if (!booking) return;
 
+    console.log("Creating checkout session for booking:", booking._id);
     setIsLoading(true);
     try {
       const result = await createCheckoutSession({
         bookingId: booking._id,
       }).unwrap();
 
+      console.log("Checkout session created:", result);
       setClientSecret(result.client_secret);
     } catch (error) {
       console.error("Failed to create checkout session:", error);
-      toast.error("Failed to initialize payment. Please try again.");
+      console.error("Error data:", error.data);
+      console.error("Error status:", error.status);
+      
+      const errorMessage = error?.data?.message || error?.message || "Failed to initialize payment. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

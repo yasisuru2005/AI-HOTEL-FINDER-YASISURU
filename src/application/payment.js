@@ -16,19 +16,38 @@ const stripe = process.env.STRIPE_SECRET_KEY
  */
 export const createCheckoutSession = async (req, res, next) => {
   try {
-    if (!stripe) return res.status(503).json({ message: "Payment service not configured" });
+    console.log("=== CREATE CHECKOUT SESSION START ===");
+    console.log("Request body:", req.body);
+    console.log("Auth info:", req.auth ? req.auth() : "No auth function");
+    
+    if (!stripe) {
+      console.error("Stripe not configured!");
+      return res.status(503).json({ message: "Payment service not configured" });
+    }
 
     const { bookingId } = req.body;
-    if (!bookingId) throw new ValidationError("bookingId is required");
+    console.log("BookingId from request:", bookingId);
+    
+    if (!bookingId) {
+      console.error("No bookingId provided");
+      throw new ValidationError("bookingId is required");
+    }
 
     const booking = await Booking.findById(bookingId).populate({
       path: "hotelId",
       model: Hotel,
     });
+    console.log("Booking found:", booking ? booking._id : "NOT FOUND");
+    
     if (!booking) throw new NotFoundError("Booking not found");
 
     // Ensure the booking belongs to the authenticated user
-    if (String(booking.userId) !== String(req.auth().userId)) {
+    const authUserId = req.auth().userId;
+    const bookingUserId = String(booking.userId);
+    console.log("Auth user:", authUserId, "Booking user:", bookingUserId);
+    
+    if (bookingUserId !== String(authUserId)) {
+      console.error("User mismatch!");
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -46,6 +65,13 @@ export const createCheckoutSession = async (req, res, next) => {
     // Stripe only accepts absolute URLs for images
     const productImage =
       hotel.image && /^https?:\/\//i.test(hotel.image) ? hotel.image : undefined;
+
+    console.log("Creating Stripe session with:", {
+      unitAmount,
+      currency,
+      hotelName: hotel.name,
+      returnUrl: `${process.env.CLIENT_URL}/payment/return?session_id={CHECKOUT_SESSION_ID}`
+    });
 
     const session = await stripe.checkout.sessions.create(
       {
@@ -78,11 +104,18 @@ export const createCheckoutSession = async (req, res, next) => {
       }
     );
 
+    console.log("Stripe session created successfully:", session.id);
+    console.log("=== CREATE CHECKOUT SESSION END ===");
+
     return res.status(200).json({
       client_secret: session.client_secret,
       session_id: session.id,
     });
   } catch (error) {
+    console.error("=== CREATE CHECKOUT SESSION ERROR ===");
+    console.error("Error details:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     next(error);
   }
 };
