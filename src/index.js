@@ -15,6 +15,9 @@ import { clerkMiddleware } from "@clerk/express";
 
 const app = express();
 
+// Stripe webhook requires raw body - MUST come before express.json()
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
 // Convert HTTP payloads into JS objects
 app.use(express.json());
 app.use(

@@ -28,6 +28,7 @@ export const createCheckoutSession = async (req, res, next) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      ui_mode: "embedded",
       line_items: [
         {
           price_data: {
@@ -46,22 +47,10 @@ export const createCheckoutSession = async (req, res, next) => {
         userId: booking.userId,
         hotelId: hotel._id.toString(),
       },
-      success_url: `${process.env.CLIENT_URL}/my-account?payment=success`,
-      cancel_url: `${process.env.CLIENT_URL}/hotels/${hotel._id}?payment=cancelled`,
+      return_url: `${process.env.CLIENT_URL}/payment/return?session_id={CHECKOUT_SESSION_ID}`,
     });
 
-    console.log("Stripe session created:", {
-      sessionId: session.id,
-      clientSecret: session.client_secret,
-      clientSecretType: typeof session.client_secret,
-      clientSecretLength: session.client_secret?.length
-    });
-    
-    res.status(200).json({ 
-      checkout_url: session.url, 
-      session_id: session.id,
-      client_secret: session.client_secret 
-    });
+    res.status(200).json({ client_secret: session.client_secret, session_id: session.id });
   } catch (error) {
     next(error);
   }
@@ -76,25 +65,37 @@ export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
   try {
-    event = new Stripe.Webhook(process.env.STRIPE_WEBHOOK_SECRET).constructEvent(
-      req.rawBody,
+    // req.body is the raw body when using express.raw()
+    event = stripe.webhooks.constructEvent(
+      req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
+    console.error("Webhook Error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   try {
+    console.log("Webhook event received:", event.type);
+    
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const { bookingId } = session.metadata || {};
+      console.log("Payment completed for booking:", bookingId);
+      
       if (bookingId) {
-        await Booking.findByIdAndUpdate(bookingId, { paymentStatus: "PAID" });
+        const updated = await Booking.findByIdAndUpdate(
+          bookingId, 
+          { paymentStatus: "PAID" },
+          { new: true }
+        );
+        console.log("Booking status updated:", updated);
       }
     }
     res.json({ received: true });
   } catch (error) {
+    console.error("Webhook processing error:", error);
     res.status(500).send();
   }
 };
