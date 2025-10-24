@@ -11,7 +11,7 @@ const STRIPE_PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 const StripeCheckout = ({ booking, onCancel }) => {
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const stripePromise = useMemo(() => {
@@ -31,7 +31,7 @@ const StripeCheckout = ({ booking, onCancel }) => {
         const res = await createCheckoutSession({ bookingId: booking._id }).unwrap();
         if (!res?.client_secret) throw new Error("No client_secret returned from server");
         setClientSecret(res.client_secret);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Failed to init checkout:", err);
         toast.error(err?.data?.message || "Failed to initialize payment.");
       } finally {
