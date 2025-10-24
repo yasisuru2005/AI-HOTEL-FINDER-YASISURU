@@ -61,11 +61,8 @@ const StripeCheckout = ({ booking, onCancel }) => {
         )}
 
         <div className="flex gap-2 pt-2">
-          <Button variant="outline" onClick={onCancel} className="flex-1">
-            Cancel
-          </Button>
-          <Button onClick={() => (window.location.href = "/my-account")} className="flex-1">
-            View Bookings
+          <Button variant="outline" onClick={onCancel} className="w-full">
+            Go Back
           </Button>
         </div>
       </CardContent>

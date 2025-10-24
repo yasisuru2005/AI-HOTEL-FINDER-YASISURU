@@ -1,5 +1,4 @@
-import { useParams } from "react-router";
-import { useState } from "react";
+import { useParams, useNavigate } from "react-router";
 // import { hotels } from "../data.js";
 import { Badge } from "@/components/ui/badge";
 import { MapPin } from "lucide-react";
@@ -13,28 +12,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useGetHotelByIdQuery } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import BookingForm from "@/components/BookingForm";
-import StripeCheckout from "@/components/StripeCheckout";
 
 const HotelDetailsPage = () => {
   const { _id } = useParams();
+  const navigate = useNavigate();
   const { data: hotel, isLoading, isError, error } = useGetHotelByIdQuery(_id);
-  const [currentBooking, setCurrentBooking] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
 
   const handleBookingCreated = (booking) => {
-    setCurrentBooking(booking);
-    setShowPayment(true);
-  };
-
-  const handlePaymentSuccess = () => {
-    setShowPayment(false);
-    setCurrentBooking(null);
-    // Redirect to my account or show success message
-  };
-
-  const handlePaymentCancel = () => {
-    setShowPayment(false);
-    setCurrentBooking(null);
+    // Navigate to the payment page with the booking ID
+    navigate(`/payment?bookingId=${booking._id}`);
   };
 
   if (isLoading) {
@@ -164,21 +150,13 @@ const HotelDetailsPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Booking Section */}
       <div className="mt-8">
-        {showPayment ? (
-          <StripeCheckout
-            booking={currentBooking}
-            onPaymentSuccess={handlePaymentSuccess}
-            onCancel={handlePaymentCancel}
-          />
-        ) : (
-          <BookingForm
-            hotel={hotel}
-            onBookingCreated={handleBookingCreated}
-          />
-        )}
+        <BookingForm
+          hotel={hotel}
+          onBookingCreated={handleBookingCreated}
+        />
       </div>
     </main>
   );

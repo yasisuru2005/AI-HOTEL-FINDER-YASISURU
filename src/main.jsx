@@ -9,6 +9,7 @@ import MyAccountPage from "./pages/my-account.page.jsx";
 import NotFoundPage from "./pages/not-found.page.jsx";
 import SignInPage from "./pages/sign-in.page.jsx";
 import SignUpPage from "./pages/sign-up.page.jsx";
+import PaymentPage from "./pages/payment.page.jsx";
 
 import { Provider } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router";
@@ -40,6 +41,7 @@ createRoot(document.getElementById("root")).render(
                 <Route element={<ProtectLayout />}>
                   <Route path="/hotels/:_id" element={<HotelDetailsPage />} />
                   <Route path="/my-account" element={<MyAccountPage />} />
+                  <Route path="/payment" element={<PaymentPage />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFoundPage />} />
