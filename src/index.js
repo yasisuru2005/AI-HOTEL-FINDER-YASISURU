@@ -8,33 +8,32 @@ import connectDB from "./infrastructure/db.js";
 import reviewRouter from "./api/review.js";
 import locationsRouter from "./api/location.js";
 import bookingRouter from "./api/booking.js";
-import paymentRouter from "./api/payment.js";
+import paymentRouter, { handleStripeWebhook } from "./api/payment.js"; // updated import
 import globalErrorHandlingMiddleware from "./api/middleware/global-error-handling-middleware.js";
 
 import { clerkMiddleware } from "@clerk/express";
 
 const app = express();
 
-// Stripe webhook requires raw body - MUST come before express.json()
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+/** 
+ * 1) Stripe webhook FIRST — must use raw body and skip auth
+ */
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
-// Convert HTTP payloads into JS objects
-app.use(express.json());
+/**
+ * 2) Normal middleware
+ */
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      process.env.CLIENT_URL
-    ].filter(Boolean),
+    origin: ["http://localhost:5173", process.env.CLIENT_URL].filter(Boolean),
   })
 );
-app.use(clerkMiddleware()); // Reads the JWT from the request and sets the auth object on the request
+app.use(express.json());
+app.use(clerkMiddleware());
 
-// app.use((req, res, next) => {
-//   console.log(req.method, req.url);
-//   next();
-// });
-
+/**
+ * 3) Routers
+ */
 app.use("/api/hotels", hotelsRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/locations", locationsRouter);
@@ -47,5 +46,5 @@ connectDB();
 
 const PORT = 8000;
 app.listen(PORT, () => {
-  console.log("Server is listening on PORT: ", PORT);
+  console.log("Server is listening on PORT:", PORT);
 });

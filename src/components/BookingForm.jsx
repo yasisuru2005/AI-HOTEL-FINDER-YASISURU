@@ -5,32 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Calendar, CalendarDays, Users } from "lucide-react";
 import { useCreateBookingMutation } from "@/lib/api";
 import { toast } from "sonner";
-import { useUser } from "@clerk/clerk-react";
 
 const BookingForm = ({ hotel, onBookingCreated }) => {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, isLoaded } = useUser();
 
   const [createBooking] = useCreateBookingMutation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!isLoaded) {
-      toast.error("Please wait, loading user information...");
-      return;
-    }
-    
-    if (!user) {
-      toast.error("Please sign in to make a booking");
-      return;
-    }
-    
     if (!checkIn || !checkOut) {
-      toast.error("Please select both check-in and check-out dates");
+      toast.error("Please select check-in and check-out dates");
       return;
     }
 

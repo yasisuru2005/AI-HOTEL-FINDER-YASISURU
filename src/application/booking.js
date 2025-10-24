@@ -96,30 +96,5 @@ export const getBookingById = async (req, res, next) => {
   }
 };
 
-export const updateBookingStatus = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { paymentStatus } = req.body;
-    
-    if (!paymentStatus || !["PENDING", "PAID", "CANCELLED"].includes(paymentStatus)) {
-      throw new ValidationError("Invalid payment status");
-    }
-    
-    const booking = await Booking.findById(id);
-    if (!booking) throw new NotFoundError("Booking not found");
-    
-    if (booking.userId !== req.auth().userId) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-    
-    booking.paymentStatus = paymentStatus;
-    await booking.save();
-    
-    res.status(200).json(booking);
-  } catch (error) {
-    next(error);
-  }
-};
-
 
 

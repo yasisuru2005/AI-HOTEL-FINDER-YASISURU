@@ -13,7 +13,6 @@ import { PlusCircle, Filter, X, LayoutGrid, List } from "lucide-react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { clearSearch } from "@/lib/features/searchSlice";
-import { Link } from "react-router";
 
 function HotelListings() {
   const dispatch = useDispatch();
@@ -316,13 +315,11 @@ function HotelListings() {
                       <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
                         {hotel.description}
                       </div>
-                        <div className="mt-3 flex items-center justify-between">
+                      <div className="mt-3 flex items-center justify-between">
                         <div className="text-sm">
                           <span className="font-medium">${hotel.price}</span> / night · {hotel.rating || 0}⭐
                         </div>
-                        <Button size="sm" variant="outline" asChild>
-                          <Link to={`/hotels/${hotel._id}`}>View Details</Link>
-                        </Button>
+                        <Button size="sm" variant="outline">View Details</Button>
                       </div>
                     </div>
                   </div>

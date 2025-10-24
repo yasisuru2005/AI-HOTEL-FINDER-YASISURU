@@ -1,15 +1,26 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { useCreateCheckoutSessionMutation } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
 const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
+  const [clientSecret, setClientSecret] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
 
-  const createCheckoutSessionHandler = useCallback(async () => {
+  useEffect(() => {
+    if (booking) {
+      createCheckoutSessionHandler();
+    }
+  }, [booking]);
+
+  const createCheckoutSessionHandler = async () => {
     if (!booking) return;
 
     setIsLoading(true);
@@ -18,30 +29,18 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
         bookingId: booking._id,
       }).unwrap();
 
-      console.log("Checkout session result:", result);
-      
-      // Redirect to Stripe Checkout
-      if (result.checkout_url) {
-        window.location.href = result.checkout_url;
-      } else {
-        toast.error("Payment session could not be created. Please try again.");
-        onCancel();
-      }
-      
+      setClientSecret(result.client_secret);
     } catch (error) {
       console.error("Failed to create checkout session:", error);
       toast.error("Failed to initialize payment. Please try again.");
-      onCancel();
     } finally {
       setIsLoading(false);
     }
-  }, [booking, createCheckoutSession, onCancel]);
+  };
 
-  useEffect(() => {
-    if (booking) {
-      createCheckoutSessionHandler();
-    }
-  }, [booking, createCheckoutSessionHandler]);
+  const options = {
+    clientSecret,
+  };
 
   if (isLoading) {
     return (
@@ -49,7 +48,25 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
         <CardContent className="p-6">
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Redirecting to payment...</span>
+            <span>Preparing payment...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!clientSecret) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6">
+          <div className="text-center space-y-4">
+            <CreditCard className="h-12 w-12 mx-auto text-muted-foreground" />
+            <p className="text-muted-foreground">
+              Unable to initialize payment. Please try again.
+            </p>
+            <Button onClick={createCheckoutSessionHandler} variant="outline">
+              Retry
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -61,33 +78,26 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
-          Payment Redirect
+          Complete Payment
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Redirecting to secure payment...</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            You will be redirected to Stripe's secure payment page.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => window.location.href = '/my-account'}
-              className="flex-1"
-            >
-              View Bookings
-            </Button>
-          </div>
+        <Elements options={options} stripe={stripePromise}>
+          <EmbeddedCheckoutProvider
+            options={options}
+            stripe={stripePromise}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+        </Elements>
+        <div className="mt-4 flex gap-2">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
         </div>
       </CardContent>
     </Card>
