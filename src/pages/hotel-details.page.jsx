@@ -80,7 +80,7 @@ const HotelDetailsPage = () => {
   }
 
   return (
-    <main className="px-4">
+    <main className="px-4 pb-12">
       <div className="grid md:grid-cols-3 gap-8">
         {/* Hotel Images - Left Column (2 cols on desktop) */}
         <div className="md:col-span-2 space-y-4">
