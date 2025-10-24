@@ -15,8 +15,24 @@ import { clerkMiddleware } from "@clerk/express";
 
 const app = express();
 
-/** 1) Stripe webhook FIRST — raw body, no auth */
-app.post("/api/payments/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
+/** 1) CORS first (but webhook will bypass it) */
+app.use(
+  cors({
+    origin: ["http://localhost:5173", process.env.CLIENT_URL].filter(Boolean),
+  })
+);
+
+/** 2) Stripe webhook — raw body, no auth, BEFORE express.json() */
+app.post("/api/payments/webhook", 
+  express.raw({ type: "application/json" }), 
+  (req, res, next) => {
+    console.log("🎯 Webhook route hit at /api/payments/webhook");
+    console.log("Method:", req.method);
+    console.log("Headers:", req.headers);
+    next();
+  },
+  handleStripeWebhook
+);
 
 // Test endpoint to verify webhook route is accessible
 app.get("/api/payments/webhook-test", (req, res) => {
@@ -24,12 +40,7 @@ app.get("/api/payments/webhook-test", (req, res) => {
   res.json({ message: "Webhook endpoint is accessible", timestamp: new Date().toISOString() });
 });
 
-/** 2) Normal middleware */
-app.use(
-  cors({
-    origin: ["http://localhost:5173", process.env.CLIENT_URL].filter(Boolean),
-  })
-);
+/** 3) Normal middleware */
 app.use(express.json());
 app.use(clerkMiddleware());
 
