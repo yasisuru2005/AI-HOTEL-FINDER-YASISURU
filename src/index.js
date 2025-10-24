@@ -18,6 +18,12 @@ const app = express();
 /** 1) Stripe webhook FIRST — raw body, no auth */
 app.post("/api/payments/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
+// Test endpoint to verify webhook route is accessible
+app.get("/api/payments/webhook-test", (req, res) => {
+  console.log("Webhook test endpoint hit!");
+  res.json({ message: "Webhook endpoint is accessible", timestamp: new Date().toISOString() });
+});
+
 /** 2) Normal middleware */
 app.use(
   cors({
