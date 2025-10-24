@@ -3,13 +3,12 @@ import isAuthenticated from "./middleware/authentication-middleware.js";
 import {
   createCheckoutSession,
   getCheckoutSession,
-  handleStripeWebhook,
 } from "../application/payment.js";
 
 const paymentRouter = express.Router();
 
 paymentRouter.post("/create-checkout-session", isAuthenticated, createCheckoutSession);
-paymentRouter.post("/webhook", handleStripeWebhook); // NO auth middleware for webhooks
+// NOTE: Webhook route is registered directly in index.js with raw body parser
 paymentRouter.get("/session/:id", isAuthenticated, getCheckoutSession);
 
 export default paymentRouter;

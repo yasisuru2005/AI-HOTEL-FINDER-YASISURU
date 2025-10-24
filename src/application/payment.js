@@ -92,32 +92,66 @@ export const createCheckoutSession = async (req, res, next) => {
  * BEFORE express.json() and outside any auth middleware.
  */
 export const handleStripeWebhook = async (req, res) => {
-  if (!stripe) return res.status(503).json({ message: "Payment service not configured" });
+  console.log("=== STRIPE WEBHOOK RECEIVED ===");
+  
+  if (!stripe) {
+    console.error("Stripe not configured!");
+    return res.status(503).json({ message: "Payment service not configured" });
+  }
 
   const sig = req.headers["stripe-signature"];
+  console.log("Webhook signature present:", !!sig);
+  
   let event;
 
   try {
     // req.body is a Buffer here because of express.raw() on this route
+    console.log("Request body type:", typeof req.body);
+    console.log("Request body is Buffer:", Buffer.isBuffer(req.body));
+    
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+    console.log("Webhook event constructed successfully:", event.type);
   } catch (err) {
+    console.error("Webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   try {
+    console.log("Processing event type:", event.type);
+    
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const bookingId = session?.metadata?.bookingId;
+      
+      console.log("Checkout session completed!");
+      console.log("Session ID:", session.id);
+      console.log("Payment status:", session.payment_status);
+      console.log("Booking ID from metadata:", bookingId);
+      
       if (bookingId) {
-        await Booking.findByIdAndUpdate(bookingId, { paymentStatus: "PAID" });
+        const result = await Booking.findByIdAndUpdate(
+          bookingId, 
+          { paymentStatus: "PAID" },
+          { new: true }
+        );
+        console.log("Booking updated successfully:", result?._id);
+        console.log("New payment status:", result?.paymentStatus);
+      } else {
+        console.error("No booking ID in metadata!");
       }
     }
+    
+    console.log("=== WEBHOOK PROCESSED SUCCESSFULLY ===");
     return res.json({ received: true });
   } catch (error) {
+    console.error("=== WEBHOOK PROCESSING ERROR ===");
+    console.error("Error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     return res.status(500).send();
   }
 };
