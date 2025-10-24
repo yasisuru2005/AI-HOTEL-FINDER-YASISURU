@@ -47,14 +47,6 @@ export const createCheckoutSession = async (req, res, next) => {
     const productImage =
       hotel.image && /^https?:\/\//i.test(hotel.image) ? hotel.image : undefined;
 
-    const sessionMetadata = {
-      bookingId: String(booking._id),
-      userId: String(booking.userId),
-      hotelId: String(hotel._id),
-    };
-    
-    console.log("Creating Stripe session with metadata:", sessionMetadata);
-
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
@@ -72,7 +64,11 @@ export const createCheckoutSession = async (req, res, next) => {
             quantity: 1,
           },
         ],
-        metadata: sessionMetadata,
+        metadata: {
+          bookingId: String(booking._id),
+          userId: String(booking.userId),
+          hotelId: String(hotel._id),
+        },
         // Keep a return hub so we can reliably redirect using session metadata
         return_url: `${process.env.CLIENT_URL}/payment/return?session_id={CHECKOUT_SESSION_ID}`,
       },
@@ -80,9 +76,6 @@ export const createCheckoutSession = async (req, res, next) => {
         idempotencyKey: `checkout_${booking._id}`, // avoid dup sessions
       }
     );
-
-    console.log("Stripe session created:", session.id);
-    console.log("Session metadata saved:", session.metadata);
 
     return res.status(200).json({
       client_secret: session.client_secret,
