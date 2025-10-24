@@ -1,108 +1,71 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import { useCreateCheckoutSessionMutation } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const STRIPE_PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
-  const [clientSecret, setClientSecret] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+const StripeCheckout = ({ booking, onCancel }) => {
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const stripePromise = useMemo(() => {
+    if (!STRIPE_PK) {
+      console.error("Missing VITE_STRIPE_PUBLISHABLE_KEY");
+      toast.error("Stripe is not configured on the client.");
+      return null;
+    }
+    return loadStripe(STRIPE_PK);
+  }, []);
 
   useEffect(() => {
-    if (booking) {
-      createCheckoutSessionHandler();
-    }
-  }, [booking]);
-
-  const createCheckoutSessionHandler = async () => {
-    if (!booking) return;
-
-    console.log("Creating checkout session for booking:", booking._id);
-    setIsLoading(true);
-    try {
-      const result = await createCheckoutSession({
-        bookingId: booking._id,
-      }).unwrap();
-
-      console.log("Checkout session created:", result);
-      setClientSecret(result.client_secret);
-    } catch (error) {
-      console.error("Failed to create checkout session:", error);
-      console.error("Error data:", error.data);
-      console.error("Error status:", error.status);
-      
-      const errorMessage = error?.data?.message || error?.message || "Failed to initialize payment. Please try again.";
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const options = {
-    clientSecret,
-  };
-
-  if (isLoading) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Preparing payment...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!clientSecret) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardContent className="p-6">
-          <div className="text-center space-y-4">
-            <CreditCard className="h-12 w-12 mx-auto text-muted-foreground" />
-            <p className="text-muted-foreground">
-              Unable to initialize payment. Please try again.
-            </p>
-            <Button onClick={createCheckoutSessionHandler} variant="outline">
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+    (async () => {
+      if (!booking?._id) return;
+      setLoading(true);
+      try {
+        const res = await createCheckoutSession({ bookingId: booking._id }).unwrap();
+        if (!res?.client_secret) throw new Error("No client_secret returned from server");
+        setClientSecret(res.client_secret);
+      } catch (err: any) {
+        console.error("Failed to init checkout:", err);
+        toast.error(err?.data?.message || "Failed to initialize payment.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [booking, createCheckoutSession]);
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
-          Complete Payment
+          Secure Checkout
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <Elements options={options} stripe={stripePromise}>
-          <EmbeddedCheckoutProvider
-            options={options}
-            stripe={stripePromise}
-          >
+      <CardContent className="space-y-4">
+        {!stripePromise || !clientSecret ? (
+          <div className="flex items-center justify-center gap-2 py-8">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>{loading ? "Preparing checkout…" : "Loading…"}</span>
+          </div>
+        ) : (
+          <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
             <EmbeddedCheckout />
           </EmbeddedCheckoutProvider>
-        </Elements>
-        <div className="mt-4 flex gap-2">
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className="flex-1"
-          >
+        )}
+
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" onClick={onCancel} className="flex-1">
             Cancel
+          </Button>
+          <Button onClick={() => (window.location.href = "/my-account")} className="flex-1">
+            View Bookings
           </Button>
         </div>
       </CardContent>
@@ -111,4 +74,3 @@ const StripeCheckout = ({ booking, onPaymentSuccess, onCancel }) => {
 };
 
 export default StripeCheckout;
-

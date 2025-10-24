@@ -16,38 +16,19 @@ const stripe = process.env.STRIPE_SECRET_KEY
  */
 export const createCheckoutSession = async (req, res, next) => {
   try {
-    console.log("=== CREATE CHECKOUT SESSION START ===");
-    console.log("Request body:", req.body);
-    console.log("Auth info:", req.auth ? req.auth() : "No auth function");
-    
-    if (!stripe) {
-      console.error("Stripe not configured!");
-      return res.status(503).json({ message: "Payment service not configured" });
-    }
+    if (!stripe) return res.status(503).json({ message: "Payment service not configured" });
 
     const { bookingId } = req.body;
-    console.log("BookingId from request:", bookingId);
-    
-    if (!bookingId) {
-      console.error("No bookingId provided");
-      throw new ValidationError("bookingId is required");
-    }
+    if (!bookingId) throw new ValidationError("bookingId is required");
 
     const booking = await Booking.findById(bookingId).populate({
       path: "hotelId",
       model: Hotel,
     });
-    console.log("Booking found:", booking ? booking._id : "NOT FOUND");
-    
     if (!booking) throw new NotFoundError("Booking not found");
 
     // Ensure the booking belongs to the authenticated user
-    const authUserId = req.auth().userId;
-    const bookingUserId = String(booking.userId);
-    console.log("Auth user:", authUserId, "Booking user:", bookingUserId);
-    
-    if (bookingUserId !== String(authUserId)) {
-      console.error("User mismatch!");
+    if (String(booking.userId) !== String(req.auth().userId)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
@@ -62,21 +43,14 @@ export const createCheckoutSession = async (req, res, next) => {
     const unitAmount = Math.round(humanAmount * 100);
     const currency = String(booking.currency || "usd").toLowerCase();
 
-    // Stripe only accepts absolute URLs for images
+    // Stripe only accepts absolute image URLs
     const productImage =
       hotel.image && /^https?:\/\//i.test(hotel.image) ? hotel.image : undefined;
-
-    console.log("Creating Stripe session with:", {
-      unitAmount,
-      currency,
-      hotelName: hotel.name,
-      returnUrl: `${process.env.CLIENT_URL}/payment/return?session_id={CHECKOUT_SESSION_ID}`
-    });
 
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
-        ui_mode: "embedded", // Embedded Checkout flow
+        ui_mode: "embedded", // Embedded Checkout
         line_items: [
           {
             price_data: {
@@ -95,34 +69,26 @@ export const createCheckoutSession = async (req, res, next) => {
           userId: String(booking.userId),
           hotelId: String(hotel._id),
         },
-        // Embedded Checkout uses return_url (not success_url/cancel_url)
+        // Keep a return hub so we can reliably redirect using session metadata
         return_url: `${process.env.CLIENT_URL}/payment/return?session_id={CHECKOUT_SESSION_ID}`,
       },
       {
-        // Prevent duplicate sessions for the same booking from rapid clicks
-        idempotencyKey: `checkout_${booking._id}`,
+        idempotencyKey: `checkout_${booking._id}`, // avoid dup sessions
       }
     );
-
-    console.log("Stripe session created successfully:", session.id);
-    console.log("=== CREATE CHECKOUT SESSION END ===");
 
     return res.status(200).json({
       client_secret: session.client_secret,
       session_id: session.id,
     });
   } catch (error) {
-    console.error("=== CREATE CHECKOUT SESSION ERROR ===");
-    console.error("Error details:", error);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
     next(error);
   }
 };
 
 /**
  * POST /api/payments/webhook
- * IMPORTANT: Mount this route with express.raw({ type: "application/json" })
+ * IMPORTANT: Must be mounted with express.raw({ type: "application/json" })
  * BEFORE express.json() and outside any auth middleware.
  */
 export const handleStripeWebhook = async (req, res) => {
@@ -132,7 +98,7 @@ export const handleStripeWebhook = async (req, res) => {
   let event;
 
   try {
-    // req.body is a Buffer here because of express.raw()
+    // req.body is a Buffer here because of express.raw() on this route
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
@@ -146,31 +112,30 @@ export const handleStripeWebhook = async (req, res) => {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const bookingId = session?.metadata?.bookingId;
-
       if (bookingId) {
         await Booking.findByIdAndUpdate(bookingId, { paymentStatus: "PAID" });
       }
     }
-
     return res.json({ received: true });
   } catch (error) {
     return res.status(500).send();
   }
 };
 
+/**
+ * GET /api/payments/session/:id
+ * Used by /payment/return page to look up hotelId/bookingId for redirect.
+ */
 export const getCheckoutSession = async (req, res, next) => {
   try {
     if (!stripe) return res.status(503).json({ message: "Payment service not configured" });
-    const { id } = req.params; // Checkout Session id from query
+    const { id } = req.params;
     const s = await stripe.checkout.sessions.retrieve(id);
-
     return res.json({
       id: s.id,
-      payment_status: s.payment_status,          // 'paid' when done
-      status: s.status,                          // 'complete' when done
-      mode: s.mode,
-      ui_mode: s.ui_mode,
-      metadata: s.metadata || {},                // contains bookingId, hotelId you set
+      payment_status: s.payment_status, // 'paid'
+      status: s.status,                 // 'complete'
+      metadata: s.metadata || {},       // contains bookingId, hotelId
     });
   } catch (err) {
     next(err);
@@ -180,4 +145,5 @@ export const getCheckoutSession = async (req, res, next) => {
 export default {
   createCheckoutSession,
   handleStripeWebhook,
+  getCheckoutSession,
 };
